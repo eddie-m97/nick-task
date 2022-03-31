@@ -5,6 +5,7 @@
     "keywords": ["framework", "laravel"],
     "license": "MIT",
     "require": {
+        "ext-pcntl": "*",
         "php": "^7.4",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",

@@ -12,6 +12,8 @@ class PostPublished extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    private const QUEUE_NAME = 'send-email';
+
     protected Post $post;
 
     /**
@@ -21,6 +23,7 @@ class PostPublished extends Notification implements ShouldQueue
      */
     public function __construct(Post $post)
     {
+        $this->queue = self::QUEUE_NAME;
         $this->post = $post;
     }
 

@@ -3,40 +3,29 @@
 namespace App\Services;
 
 use App\Models\Post;
+use App\Models\Subscriber;
 use App\Notifications\PostPublished;
-use App\Repositories\PostRepository;
-use Illuminate\Support\Facades\Log;
 
 class PostService
 {
-    private PostRepository $postRepository;
+    private const SUBSCRIBER_CHUNK_SIZE = 50;
 
-    public function __construct(PostRepository $postRepository)
+    /**
+     * @param Post $post
+     * @return void
+     */
+    public function sendPostToSubscribers(Post $post)
     {
-        $this->postRepository = $postRepository;
-    }
-
-    public function sendPostsToSubscribers()
-    {
-        $posts = $this->postRepository->getNotSentPosts();
-        foreach ($posts as $post) {
-            try {
-                $this->sendPostToSubscribers($post);
-            } catch (\Exception $exception) {
-                Log::error('Error to send post to subscribers', [
-                    'post_id' => $post->id,
-                    'message' => $exception->getMessage(),
-                    'trace' => $exception->getTraceAsString(),
+        Subscriber::where('website_id', $post->website_id)->whereDoesntHave('sentPosts', function ($query) use ($post) {
+            $query->where('post_id', $post->id);
+        })->chunkById(self::SUBSCRIBER_CHUNK_SIZE, function ($subscribers) use ($post) {
+            foreach ($subscribers as $subscriber) {
+                $subscriber->notify(new PostPublished($post));
+                // Even if job fails at all, and we run "php artisan queue:failed", subscriber will not get duplicate email.
+                $subscriber->sentPosts()->create([
+                    'post_id' => $post->id
                 ]);
             }
-        }
-    }
-
-    private function sendPostToSubscribers(Post $post)
-    {
-        foreach ($post->website->subscribers as $subscriber) {
-            $subscriber->notify(new PostPublished($post));
-        }
-        $post->update(['sent' => true]);
+        });
     }
 }

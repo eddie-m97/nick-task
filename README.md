@@ -9,4 +9,8 @@
 6. Listen for queues with ```php artisan queue:work```</li>
 7. Send posts with ```php artisan posts:send```
 
+ADD
+I used 2 queues: send-email and process-post
+I suggest to use horizon for queue management.
+
 [Postman collection](https://www.getpostman.com/collections/593dacf0c9b8c857cf65)
